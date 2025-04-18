@@ -69,7 +69,7 @@ export function Home() {
     <main className="min-h-screen overflow-hidden">      
       {/* Hero Section */}
       <section className="relative h-screen bg-[url('https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')] bg-cover bg-center">
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-[#166A9A]/70" />
         <div className="relative max-w-7xl mx-auto px-4 h-full flex flex-col justify-center items-center text-white text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 px-4">
             Empowering Your Next Career Move.

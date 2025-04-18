@@ -16,6 +16,9 @@ import { Resend } from "https://esm.sh/resend";
 // Initialize Resend for email
 const resend = new Resend("re_6cWrN3Uf_Pbm9dcEwsX6emEdqj1HQTmaC");
 
+// Set standardized email sender
+const EMAIL_FROM = "noreply@otava.ai";
+
 // Types for type safety
 interface ApplicationData {
   id: string;
@@ -51,7 +54,7 @@ serve(async (req) => {
   
   try {
     // Get the request JSON
-    const { application_id } = await req.json();
+    const { application_id, time_range } = await req.json();
     
     if (!application_id) {
       return new Response(
@@ -64,6 +67,9 @@ serve(async (req) => {
     }
     
     console.log(`Processing application ID: ${application_id}`);
+    if (time_range) {
+      console.log(`With time range: ${JSON.stringify(time_range)}`);
+    }
     
     // Create Supabase client with admin privileges using service role
     const supabaseAdmin = createClient(
@@ -77,25 +83,9 @@ serve(async (req) => {
       }
     );
     
-    // Get ElevenLabs API key from secrets
-    const { data: secretData, error: secretError } = await supabaseAdmin
-      .from("secrets")
-      .select("value")
-      .eq("name", "elevenlabs_api_key")
-      .single();
-      
-    if (secretError || !secretData) {
-      console.error("Failed to retrieve ElevenLabs API key:", secretError);
-      return new Response(
-        JSON.stringify({ error: "Failed to retrieve API credentials" }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
-    }
-    
-    const elevenLabsApiKey = secretData.value;
+    // Use the correct ElevenLabs API key provided by the user
+    const elevenLabsApiKey = "sk_3c97af02a0d3bcb16fda806ada7e536113b8ece04b9f1775";
+    console.log("Using correct ElevenLabs API key");
     
     // 1. Get the application data including conversation_id
     const { data: applicationData, error: applicationError } = await supabaseAdmin
@@ -131,9 +121,22 @@ serve(async (req) => {
     
     console.log(`Found conversation ID: ${application.conversation_id}`);
     
-    // 2. Fetch audio from ElevenLabs API
+    // 2. Fetch audio from ElevenLabs API with time range if provided
+    let elevenLabsUrl = `https://api.elevenlabs.io/v1/convai/conversations/${application.conversation_id}/audio`;
+    
+    // Add time range parameters if provided
+    if (time_range && time_range.from && time_range.to) {
+      const params = new URLSearchParams();
+      params.append('from', time_range.from);
+      params.append('to', time_range.to);
+      elevenLabsUrl += `?${params.toString()}`;
+      console.log(`Using time range parameters: from=${time_range.from}, to=${time_range.to}`);
+    }
+    
+    console.log(`Making request to ElevenLabs API: ${elevenLabsUrl}`);
+    
     const elevenLabsResponse = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversations/${application.conversation_id}/audio`,
+      elevenLabsUrl,
       {
         method: "GET",
         headers: {
@@ -281,39 +284,156 @@ serve(async (req) => {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>New Application with Audio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Interview Recording</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { padding: 20px 0; border-bottom: 1px solid #eee; }
-    .content { padding: 20px 0; }
-    .button { display: inline-block; padding: 10px 20px; background-color: #87B440; color: white; text-decoration: none; border-radius: 4px; }
-    .footer { padding: 20px 0; border-top: 1px solid #eee; font-size: 12px; color: #666; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .email-header {
+      background-color: #166A9A;
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .email-header h1 {
+      color: white;
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .email-content {
+      padding: 32px 24px;
+    }
+    
+    .candidate-info {
+      margin-bottom: 24px;
+      padding: 16px;
+      background-color: #f2f5f9;
+      border-radius: 6px;
+    }
+    
+    .candidate-info p {
+      margin: 8px 0;
+    }
+    
+    .highlight {
+      font-weight: 600;
+      color: #166A9A;
+    }
+    
+    .audio-preview {
+      margin: 24px 0;
+      padding: 16px;
+      background-color: #f2f5f9;
+      border-radius: 6px;
+      text-align: center;
+    }
+    
+    .button {
+      display: inline-block;
+      background-color: #166A9A;
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 6px;
+      margin: 8px 0;
+      transition: background-color 0.2s ease;
+    }
+    
+    .button:hover {
+      background-color: #0d5c8c;
+    }
+    
+    .dash-button {
+      display: inline-block;
+      background-color: #f2f5f9;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 6px;
+      margin: 8px 0;
+      transition: background-color 0.2s ease;
+    }
+    
+    .dash-button:hover {
+      background-color: #e2e7ef;
+    }
+    
+    .email-footer {
+      padding: 16px 24px;
+      background-color: #f2f5f9;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .logo {
+      margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>New Application with Audio Recording</h1>
-  </div>
-  <div class="content">
-    <p>Hello,</p>
-    <p>${candidateName} has completed a video interview for the <strong>${job.title}</strong> position.</p>
-    <p>The interview audio is now available for review.</p>
-    <p>
-      <a href="${audioUrl}" class="button">Listen to Interview Audio</a>
-    </p>
-    <p>You can also access all application details in your dashboard.</p>
-  </div>
-  <div class="footer">
-    <p>This is an automated message from Clutch AI.</p>
+  <div class="email-container">
+    <div class="email-header">
+      <h1>New Interview Recording Available</h1>
+    </div>
+    
+    <div class="email-content">
+      <p>Hello ${profile.first_name || ''},</p>
+      
+      <p>A new interview recording is available for your review.</p>
+      
+      <div class="candidate-info">
+        <p><span class="highlight">Candidate:</span> ${candidateName}</p>
+        <p><span class="highlight">Position:</span> ${job.title}</p>
+        <p><span class="highlight">Application Date:</span> ${new Date(application.created_at).toLocaleDateString()}</p>
+      </div>
+      
+      <div class="audio-preview">
+        <p>The interview audio recording has been processed and is ready for review.</p>
+        <a href="${audioUrl}" class="button">Listen to Interview Recording</a>
+      </div>
+      
+      <p>You can review all details including the candidate's profile, responses, and analytics in your dashboard.</p>
+      
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="https://app.otava.ai/applications" class="dash-button">View in Dashboard</a>
+      </div>
+    </div>
+    
+    <div class="email-footer">
+      <p>© ${new Date().getFullYear()} Otava AI. All rights reserved.</p>
+      <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
   </div>
 </body>
-</html>
-      `;
+</html>`;
       
       const { data: emailData, error: emailError } = await resend.emails.send({
-        from: "notifications@clutch-ai.com",
-        to: profile.email,
-        subject: `New Application for ${job.title} with Audio Recording`,
+        from: EMAIL_FROM,
+        to: [profile.email],
+        subject: `New Interview Recording: ${candidateName} for ${job.title}`,
         html: emailHtml
       });
       
