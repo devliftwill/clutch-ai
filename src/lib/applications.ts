@@ -11,12 +11,17 @@ export type Application = Database['public']['Tables']['applications']['Row'] & 
   } | null;
 };
 
-export async function createApplication(jobId: string, videoUrl?: string, metadata?: Record<string, any>) {
+export async function createApplication(
+  jobId: string, 
+  videoUrl?: string, 
+  metadata?: Record<string, any>,
+  conversationId?: string | null
+) {
   // Get the current user's session
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  // Prepare the application data
+  // Prepare the basic application data (only use guaranteed columns)
   const applicationData: any = { 
     job_id: jobId,
     candidate_id: user.id,
@@ -25,33 +30,60 @@ export async function createApplication(jobId: string, videoUrl?: string, metada
     video_completed: !!videoUrl,
     video_completed_at: videoUrl ? new Date().toISOString() : null
   };
-
-  // Add metadata fields if provided
-  if (metadata) {
-    // Store the transcript if available
-    if (metadata.transcript) {
-      applicationData.transcript = metadata.transcript;
-    }
-    
-    // Store the audio URL if available
-    if (metadata.audio_url) {
-      applicationData.audio_url = metadata.audio_url;
-    }
-    
-    // Store any other metadata as JSON in a metadata column if it exists
-    if (Object.keys(metadata).length > 0) {
-      applicationData.metadata = metadata;
-    }
+  
+  // Add conversation_id if provided
+  if (conversationId) {
+    console.log(`Including conversation_id in application: ${conversationId}`);
+    applicationData.conversation_id = conversationId;
   }
 
-  const { data, error } = await supabase
-    .from('applications')
-    .insert([applicationData])
-    .select()
-    .single();
+  // Try to create the application using just the basic data first
+  try {
+    console.log('Creating application with basic data');
+    const { data, error } = await supabase
+      .from('applications')
+      .insert([applicationData])
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
+    if (error) throw error;
+    
+    // Once the application is created, we can update it with additional data if needed
+    if (metadata && Object.keys(metadata).length > 0) {
+      try {
+        console.log('Updating application with additional metadata');
+        const updateData: any = {};
+        
+        // Only add fields that might exist
+        if (metadata.transcript) {
+          updateData.transcript = metadata.transcript;
+        }
+        
+        if (metadata.audio_url) {
+          updateData.audio_url = metadata.audio_url;
+        }
+        
+        // Only attempt update if we have fields to update
+        if (Object.keys(updateData).length > 0) {
+          const { error: updateError } = await supabase
+            .from('applications')
+            .update(updateData)
+            .eq('id', data.id);
+            
+          if (updateError) {
+            console.log('Could not update with additional data, but application was created:', updateError);
+          }
+        }
+      } catch (updateError) {
+        console.log('Error updating with additional data, but application was created:', updateError);
+      }
+    }
+    
+    return data.id; // Return the application ID
+  } catch (insertError: any) {
+    console.error('Error creating application:', insertError);
+    throw insertError;
+  }
 }
 
 export async function getApplications() {

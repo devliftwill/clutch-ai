@@ -47,8 +47,10 @@ export function Home() {
 
   async function loadJobs() {
     try {
-      const fetchedJobs = await getJobs();
-      setJobs(Array.isArray(fetchedJobs) ? fetchedJobs : []);
+      const result = await getJobs();
+      // Handle the updated return structure from getJobs
+      const fetchedJobs = result?.jobs || [];
+      setJobs(fetchedJobs);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load jobs");
       setJobs([]);
@@ -177,7 +179,11 @@ export function Home() {
                 
                 {/* Center circle with Clutch logo */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white rounded-full shadow-xl flex items-center justify-center">
-                  <img src="/clutch-icon.png" alt="Clutch" className="w-20 h-20" />
+                  <img 
+                    src="/logo-icon.jpg" 
+                    alt="Clutch" 
+                    className="w-10 h-10 object-cover object-center"
+                  />
                 </div>
 
                 {/* Orbital items */}

@@ -11,9 +11,9 @@ export function Footer() {
           <div>
             <Link href="/">
               <img
-                src="https://clutchjobs.ca/images/clutchlogo_white@2x.png"
+                src="/logo-icon.jpg"
                 alt="Clutch Jobs"
-                className="w-[120px] h-[40px] object-contain mb-4"
+                className="w-[50px] h-[50px] object-contain mb-4"
               />
             </Link>
             {/* Social Media Links */}

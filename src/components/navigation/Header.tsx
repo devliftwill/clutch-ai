@@ -52,9 +52,9 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left section - Logo */}
-          <div className="w-[180px] flex-shrink-0">
+          <div className="w-[150px] flex-shrink-0">
             <a href="/" className="flex items-center">
-              <div className="h-8 relative">
+              <div className="h-6 relative">
                 <img
                   src="https://clutchjobs.ca/images/clutchlogo_white@2x.png"
                   alt="Clutch Jobs"

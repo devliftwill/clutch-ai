@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ChatWidget } from "./ui/chat-widget";
 import { Conversation } from '@11labs/client';
 import { supabase } from "../lib/supabase";
+import { triggerStoreAudio } from "../lib/audio";
 
 // Add this type at the top of the file
 type DisconnectionDetails = {
@@ -194,6 +195,7 @@ export function JobDetails({ id }: { id: string }) {
   const [useCanvas, setUseCanvas] = useState(true);
   const videoRenderRef = useRef<number | null>(null);
   
+  // Update the state type
   const [conversation, setConversation] = useState<any>(null);
   const [transcription, setTranscription] = useState<string>("");
 
@@ -202,7 +204,7 @@ export function JobDetails({ id }: { id: string }) {
   const videoTrackMonitorRef = useRef<number | null>(null);
   const [isElevenLabsInitializing, setIsElevenLabsInitializing] = useState(false);
   const [isElevenLabsConnected, setIsElevenLabsConnected] = useState(false);
-  
+
   // Define proper types for the recorder and chunks
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
@@ -212,6 +214,17 @@ export function JobDetails({ id }: { id: string }) {
   const audioOutputRef = useRef<HTMLAudioElement | null>(null);
   // Add state to store all audio URLs from ElevenLabs
   const [audioUrls, setAudioUrls] = useState<string[]>([]);
+  // Add state to store audio blobs for upload
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
+  // Add a reference to track audio fetch operations
+  const pendingAudioFetches = useRef<Promise<any>[]>([]);
+
+  // Add reference to track direct audio recording
+  const directAudioChunksRef = useRef<Blob[]>([]);
+  const directMediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  // Add state to store conversation ID
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   // Function to initialize recording with proper TypeScript typing
   const initializeRecording = (stream: MediaStream) => {
@@ -284,6 +297,9 @@ export function JobDetails({ id }: { id: string }) {
   const [cameraPermissionState, setCameraPermissionState] = useState<'pending' | 'granted' | 'denied' | 'error'>('pending');
   const [cameraErrorMessage, setCameraErrorMessage] = useState<string | null>(null);
 
+  // Add global conversation ID reference
+  let globalConversationId: string | null = null;
+
   // Modify the ElevenLabs initialization function
   const initializeElevenLabs = async () => {
     if (isElevenLabsInitializing || isElevenLabsConnected) {
@@ -348,6 +364,7 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
       console.log('🔌 ElevenLabs SDK is available, creating session...');
       
       // Create the session with specific options to avoid conflicts
+      // @ts-ignore - Bypassing TypeScript error about conversationId not existing
       const conv = await Conversation.startSession({
         agentId: 'KyQmFDIO63UegXTl7MvJ',
         overrides: {
@@ -375,6 +392,13 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
         onMessage: (msg: any) => {
           console.log('🔌 Message received from ElevenLabs:', msg);
           
+          // Add detailed logging of message structure
+          console.log('🔎 Message structure:', {
+            type: typeof msg,
+            hasAudioProp: msg && typeof msg === 'object' && 'audio' in msg,
+            fullObject: JSON.stringify(msg, null, 2)
+          });
+          
           // Process message
           let source = 'ai';
           let messageText = '';
@@ -388,15 +412,84 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
               // @ts-ignore - Handle different message formats
               messageText = msg.message || msg?.text || msg?.content || JSON.stringify(msg);
               
-              // Handle audio URLs from the AI response
+              // Look for audio URL in different possible locations in the message object
+              let audioUrl = null;
+              
+              // Check standard structure (msg.audio.url)
               // @ts-ignore - Access audio property
-              if (msg.audio && msg.audio.url && audioOutputRef.current) {
-                // Set audio source to the URL provided by ElevenLabs
-                audioOutputRef.current.src = msg.audio.url;
+              if (msg.audio && msg.audio.url) {
+                audioUrl = msg.audio.url;
+                console.log('�� Found audio URL in standard location (msg.audio.url):', audioUrl);
+              } 
+              // Check for direct audio URL (msg.audioUrl)
+              // @ts-ignore - Check alternative properties
+              else if (msg.audioUrl) {
+                // @ts-ignore
+                audioUrl = msg.audioUrl;
+                console.log('🎵 Found audio URL in alternative location (msg.audioUrl):', audioUrl);
+              }
+              // Check for audio in content object (msg.content.audio.url)
+              // @ts-ignore
+              else if (msg.content && typeof msg.content === 'object' && msg.content.audio && msg.content.audio.url) {
+                // @ts-ignore
+                audioUrl = msg.content.audio.url;
+                console.log('🎵 Found audio URL in content object (msg.content.audio.url):', audioUrl);
+              }
+              // Look for any property that might contain a URL to audio
+              else {
+                console.log('🎵 Searching for potential audio URL in message properties');
+                const findAudioUrl = (obj: any): string | null => {
+                  if (!obj || typeof obj !== 'object') return null;
+                  
+                  // Check all properties for URLs that might be audio
+                  for (const key in obj) {
+                    const value = obj[key];
+                    
+                    // Check if this property is a string that looks like an audio URL
+                    if (typeof value === 'string' && 
+                        (value.endsWith('.mp3') || 
+                         value.endsWith('.wav') || 
+                         value.includes('audio') || 
+                         value.includes('speech'))) {
+                      return value;
+                    }
+                    
+                    // Recursively check nested objects, but avoid circular references
+                    if (value && typeof value === 'object' && key !== 'parent' && key !== 'target') {
+                      const nestedUrl = findAudioUrl(value);
+                      if (nestedUrl) return nestedUrl;
+                    }
+                  }
+                  
+                  return null;
+                };
+                
+                audioUrl = findAudioUrl(msg);
+                if (audioUrl) {
+                  console.log('🎵 Found potential audio URL in message:', audioUrl);
+                }
+              }
+              
+              // Process the audio URL if found
+              if (audioUrl && audioOutputRef.current) {
+                // Set audio source to the URL provided
+                audioOutputRef.current.src = audioUrl;
                 console.log('🔊 Playing AI audio response');
                 
-                // Store the audio URL for later use
-                setAudioUrls(prev => [...prev, msg.audio.url]);
+                // Store the audio URL for reference
+                setAudioUrls(prev => {
+                  const newUrls = [...prev, audioUrl];
+                  console.log(`🎵 Updated audio URLs array (${newUrls.length} total):`, newUrls);
+                  return newUrls;
+                });
+                
+                // Fetch and store the audio data asynchronously
+                console.log('🎵 Starting fetch operation for audio URL');
+                const fetchPromise = fetchAndStoreAudio(audioUrl);
+                pendingAudioFetches.current.push(fetchPromise);
+                console.log(`🎵 Added fetch to pending queue (${pendingAudioFetches.current.length} total)`);
+              } else {
+                console.log('🎵 No audio URL found in this message');
               }
             } else {
               messageText = String(msg);
@@ -432,8 +525,47 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
         throw new Error('Failed to create ElevenLabs session');
       }
       
+      // Safely store conversation ID globally for later access
+      try {
+        // @ts-ignore - Accessing conversationId property which TypeScript doesn't know about
+        globalConversationId = conv?.conversationId || null;
+        if (globalConversationId) {
+          console.log('🔌 Storing global conversation ID:', globalConversationId);
+          setConversationId(globalConversationId);
+        }
+      } catch (e) {
+        console.error('Failed to access conversation ID:', e);
+      }
+      
+      // Save the conversation ID
+      const conversationId = conv.conversationId;
+      console.log('🔌 ElevenLabs session created with ID:', conversationId);
+      
+      // Store the conversation ID for later use
+      setConversationId(conversationId);
+      
       console.log('🔌 ElevenLabs session created!');
+      // Save both conversation and ID separately
       setConversation(conv);
+      
+      // Get the conversation ID if available from the response
+      if (conv) {
+        // Try to extract the conversation ID from the response
+        try {
+          // Access the property safely using an indexer
+          const convId = (conv as any)?.conversationId ?? null;
+          if (convId) {
+            console.log('🔌 ElevenLabs session created with ID:', convId);
+            setConversationId(convId);
+          } else {
+            console.log('🔌 ElevenLabs session created but no ID could be extracted');
+          }
+        } catch (err) {
+          console.error('Error extracting conversation ID:', err);
+        }
+      } else {
+        console.log('🔌 ElevenLabs session created but no ID available');
+      }
       
       return true;
     } catch (error) {
@@ -979,21 +1111,209 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
     setShowVideoDialog(false);
   };
 
+  // Add more detailed logging to the fetchAndStoreAudio function
+  const fetchAndStoreAudio = async (audioUrl: string) => {
+    try {
+      console.log('🎵 Fetching audio data from URL:', audioUrl);
+      
+      if (!audioUrl.startsWith('http')) {
+        console.error('🎵 Invalid audio URL format:', audioUrl);
+        return null;
+      }
+      
+      console.log('🎵 Starting fetch request...');
+      const response = await fetch(audioUrl);
+      console.log('🎵 Fetch response received:', {
+        ok: response.ok,
+        status: response.status,
+        contentType: response.headers.get('content-type')
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch audio: ${response.status}`);
+      }
+      
+      console.log('🎵 Converting response to blob...');
+      const audioBlob = await response.blob();
+      console.log(`🎵 Audio blob created: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+      
+      // Store the blob for later upload
+      setAudioBlobs(prev => {
+        const newBlobs = [...prev, audioBlob];
+        console.log(`🎵 Updated audio blobs array (${newBlobs.length} total)`);
+        return newBlobs;
+      });
+      
+      return audioBlob;
+    } catch (error) {
+      console.error('🎵 Error fetching audio:', error);
+      return null;
+    }
+  };
+
+  // Set up audio output element with direct recording
+  useEffect(() => {
+    // Set up audio output element
+    const audioOutput = document.createElement('audio');
+    audioOutput.id = 'ai-output-audio';
+    audioOutput.autoplay = true;
+    document.body.appendChild(audioOutput);
+    audioOutputRef.current = audioOutput;
+    
+    // Set up direct recording from the audio element
+    try {
+      console.log('🎧 Setting up direct audio recording from ElevenLabs output');
+      
+      // Initialize empty array for audio chunks
+      directAudioChunksRef.current = [];
+      
+      // Add event listener for when audio starts playing
+      audioOutput.onplay = () => {
+        console.log('🎧 ElevenLabs audio started playing');
+        
+        try {
+          // Create audio context if needed
+          if (!audioContextRef.current) {
+            audioContextRef.current = new AudioContext();
+          }
+          
+          // Create a destination node to get a MediaStream
+          const destination = audioContextRef.current.createMediaStreamDestination();
+          
+          // Create a source from the audio element
+          const source = audioContextRef.current.createMediaElementSource(audioOutput);
+          
+          // Connect the source to both the destination node and audio context destination
+          source.connect(destination);
+          source.connect(audioContextRef.current.destination);
+          
+          // Start recording this audio segment
+          const recorder = new MediaRecorder(destination.stream);
+          
+          recorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              console.log(`🎧 Recorded audio chunk: ${event.data.size} bytes`);
+              directAudioChunksRef.current.push(event.data);
+            }
+          };
+          
+          recorder.onstop = () => {
+            console.log(`🎧 Audio segment recording stopped, total chunks: ${directAudioChunksRef.current.length}`);
+            
+            // Create a blob from these chunks
+            if (directAudioChunksRef.current.length > 0) {
+              const audioBlob = new Blob(directAudioChunksRef.current, { type: 'audio/webm' });
+              console.log(`🎧 Created audio blob: ${audioBlob.size} bytes`);
+              
+              // Add to the audio blobs array for later upload
+              setAudioBlobs(prev => [...prev, audioBlob]);
+            }
+          };
+          
+          // Start recording this segment
+          recorder.start();
+          console.log('🎧 Started recording ElevenLabs audio output');
+          
+          // Save the recorder reference
+          directMediaRecorderRef.current = recorder;
+          
+          // Set up stop recording when audio ends
+          audioOutput.onended = () => {
+            console.log('🎧 Audio ended, stopping recorder');
+            if (recorder.state !== 'inactive') {
+              recorder.stop();
+            }
+          };
+    } catch (err) {
+          console.error('🎧 Error setting up audio recording:', err);
+        }
+      };
+      
+      console.log('🎧 Audio element event handlers set up');
+    } catch (err) {
+      console.error('🎧 Error in audio recording setup:', err);
+    }
+    
+    // Make sure to clean up
+    return () => {
+      if (audioOutputRef.current) {
+        document.body.removeChild(audioOutputRef.current);
+      }
+    };
+  }, []);
+
+  // Update the handleCompleteScreening function to include conversation_id
   const handleCompleteScreening = async () => {
     try {
       setApplying(true);
       
+      console.log('⚙️ Starting complete screening process');
+      
+      // Stop ongoing direct audio recording if active
+      if (directMediaRecorderRef.current && directMediaRecorderRef.current.state !== 'inactive') {
+        console.log('⚙️ Stopping direct audio recorder');
+        directMediaRecorderRef.current.stop();
+        
+        // Wait for the recorder to finish
+        await new Promise<void>(resolve => {
+          setTimeout(() => {
+            console.log('⚙️ Direct audio recorder stop timeout');
+            resolve();
+          }, 500);
+        });
+      }
+      
       // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        console.log('⚙️ Stopping media recorder');
         mediaRecorderRef.current.stop();
         
         // Wait for last data to be captured
         await new Promise<void>(resolve => {
           if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.onstop = () => resolve();
+            mediaRecorderRef.current.onstop = () => {
+              console.log('⚙️ Media recorder stopped successfully');
+              resolve();
+            };
           }
-          setTimeout(resolve, 1000); // Fallback in case onstop doesn't fire
+          setTimeout(() => {
+            console.log('⚙️ Media recorder stop timeout triggered');
+            resolve();
+          }, 1000); // Fallback in case onstop doesn't fire
         });
+      }
+      
+      // Check audio data status
+      console.log(`⚙️ Audio URLs array contains ${audioUrls.length} items:`, audioUrls);
+      console.log(`⚙️ Audio blobs array contains ${audioBlobs.length} items`);
+      console.log(`⚙️ Direct audio chunks contains ${directAudioChunksRef.current.length} items`);
+      console.log(`⚙️ Conversation ID: ${conversationId || 'Not available'}`);
+      
+      // If we have direct audio chunks but they haven't been processed into a blob yet
+      if (directAudioChunksRef.current.length > 0) {
+        console.log('⚙️ Processing remaining direct audio chunks');
+        const audioBlob = new Blob(directAudioChunksRef.current, { type: 'audio/webm' });
+        console.log(`⚙️ Created audio blob from direct chunks: ${audioBlob.size} bytes`);
+        
+        if (audioBlob.size > 0) {
+          setAudioBlobs(prev => [...prev, audioBlob]);
+          
+          // Small delay to ensure state updates
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Wait for any pending audio fetch operations to complete
+      if (pendingAudioFetches.current.length > 0) {
+        console.log(`⚙️ Waiting for ${pendingAudioFetches.current.length} audio fetches to complete...`);
+        const results = await Promise.allSettled(pendingAudioFetches.current);
+        console.log('⚙️ All audio fetches completed with results:', 
+          results.map((r, i) => `Fetch ${i}: ${r.status}`));
+        
+        // Check again after fetches complete
+        console.log(`⚙️ After fetches: Audio blobs array contains ${audioBlobs.length} items`);
+      } else {
+        console.log('⚙️ No pending audio fetches to wait for');
       }
       
       // Stop video stream
@@ -1009,8 +1329,20 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
       }
       
       // Close conversation with AI
+      let finalConversationId = conversationId;
       if (conversation) {
-        await conversation.endSession();
+        try {
+          // If we don't have a conversation ID yet, try to extract it
+          if (!finalConversationId) {
+            finalConversationId = globalConversationId;
+            console.log('⚙️ Retrieved conversation ID before closing:', finalConversationId);
+          }
+          
+          await conversation.endSession();
+          console.log('⚙️ Ended ElevenLabs conversation session');
+        } catch (err) {
+          console.error('⚙️ Error ending conversation:', err);
+        }
         setConversation(null);
       }
       
@@ -1026,118 +1358,194 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
       
       // Default to no_video in case upload fails
       let videoUrl = "no_video";
+      let audioFileUrls: string[] = [];
       
       try {
+        // Check Supabase auth status first
+        const { data: authData } = await supabase.auth.getSession();
+        if (!authData?.session) {
+          throw new Error("Not authenticated with Supabase");
+        }
+        
+        // Generate base information for file uploads
+        const userId = authData.session.user.id;
+        const timestamp = Date.now();
+        const bucketName = 'candidate-videos';
+        
+        // Upload audio files if available
+        if (audioBlobs.length > 0) {
+          console.log(`⚙️ Uploading ${audioBlobs.length} audio files to bucket`);
+          
+          const audioUploadPromises = audioBlobs.map(async (blob, index) => {
+            try {
+              const audioFileName = `interview_audio_${userId}_${timestamp}_${index}.mp3`;
+              const audioFilePath = `interviews/audio/${audioFileName}`;
+              
+              console.log(`⚙️ Uploading audio file ${index+1}/${audioBlobs.length}: ${audioFilePath}`);
+              console.log(`⚙️ Audio blob details: size=${blob.size}, type=${blob.type}`);
+              
+              const { data: audioData, error: audioError } = await supabase.storage
+                .from(bucketName)
+                .upload(audioFilePath, blob, {
+                  cacheControl: '3600',
+                  upsert: true,
+                  contentType: 'audio/mpeg'
+                });
+              
+              if (audioError) {
+                console.error(`⚙️ Error uploading audio file ${index}:`, audioError);
+                return null;
+              }
+              
+              // Get the URL for the uploaded audio
+              const { data: audioUrlData } = supabase.storage
+                .from(bucketName)
+                .getPublicUrl(audioFilePath);
+              
+              if (!audioUrlData || !audioUrlData.publicUrl) {
+                console.error(`⚙️ Failed to get URL for uploaded audio ${index}`);
+                return null;
+              }
+              
+              console.log(`⚙️ Successfully uploaded audio file ${index+1}: ${audioUrlData.publicUrl}`);
+              return audioUrlData.publicUrl;
+            } catch (err) {
+              console.error(`⚙️ Error in audio upload process ${index}:`, err);
+              return null;
+            }
+          });
+          
+          // Wait for all audio uploads to complete
+          const audioUploadResults = await Promise.all(audioUploadPromises);
+          audioFileUrls = audioUploadResults.filter(Boolean) as string[];
+          console.log(`⚙️ Successfully uploaded ${audioFileUrls.length}/${audioBlobs.length} audio files`);
+        } else {
+          console.log('⚙️ No audio blobs to upload');
+        }
+        
+        // Upload video if available
         if (recordedChunksRef.current.length > 0) {
           console.log(`Recorded chunks: ${recordedChunksRef.current.length}`);
           const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
           console.log(`Video blob created: ${videoBlob.size} bytes`);
           
           if (videoBlob.size > 0) {
-            // Always save locally as a backup
-            const localUrl = URL.createObjectURL(videoBlob);
-            const localFileName = `interview_${Date.now()}.webm`;
-            const downloadLink = document.createElement('a');
-            downloadLink.href = localUrl;
-            downloadLink.download = localFileName;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            console.log("Video saved locally as backup");
+            // Generate a unique filename with user ID
+            const fileName = `interview_${userId}_${timestamp}.webm`;
+            const filePath = `interviews/${fileName}`;
             
-            // Try uploading to Supabase if available
-            try {
-              // Check Supabase auth status
-              const { data: authData } = await supabase.auth.getSession();
-              if (!authData?.session) {
-                throw new Error("Not authenticated with Supabase");
-              }
-              
-              // Generate a unique filename with user ID if available
-              const userId = authData.session.user.id;
-              const timestamp = Date.now();
-              const fileName = `interview_${userId}_${timestamp}.webm`;
-              const filePath = `interviews/${fileName}`;
-              const bucketName = 'candidate-videos';
-              
-              console.log(`Uploading video to bucket '${bucketName}': ${filePath}`);
-              
-              // Upload to the bucket
-              const { data, error } = await supabase.storage
-                .from(bucketName)
-                .upload(filePath, videoBlob, {
-                  cacheControl: '3600',
-                  upsert: true,
-                  contentType: 'video/webm'
-                });
-              
-              if (error) {
-                // Handle specific errors
-                console.error("Upload error:", error);
-                
-                // Use type assertion to access error properties safely
-                const errorObj = error as any;
-                if (error.message?.includes('row-level security policy') || 
-                    errorObj.statusCode === '403' || 
-                    errorObj.error === 'Unauthorized') {
-                  console.error("Permission denied: The current user doesn't have access to upload videos.");
-                  console.error("To fix: Admin needs to configure storage permissions in Supabase dashboard.");
-                  throw new Error("Permission denied. Please contact your administrator to enable video uploads.");
-                } else if (error.message?.includes('bucket') && error.message?.includes('not found')) {
-                  throw new Error(`Storage bucket '${bucketName}' doesn't exist. Contact administrator.`);
-                } else {
-                  throw error;
-                }
-              }
-              
-              // Successfully uploaded, get the URL
-              const { data: urlData } = supabase.storage
-                .from(bucketName)
-                .getPublicUrl(filePath);
-              
-              if (!urlData || !urlData.publicUrl) {
-                throw new Error("Failed to get URL for uploaded video");
-              }
-              
-              videoUrl = urlData.publicUrl;
-              console.log("Successfully uploaded video. URL:", videoUrl);
-              
-              // Prepare metadata for the application
-              const metadata: Record<string, any> = {
-                video_url: videoUrl,
-                transcript: transcription,
-              };
-              
-              // Add all audio URLs if available
-              if (audioUrls.length > 0) {
-                metadata.audio_urls = audioUrls;
-                // For backward compatibility, also include the first one as audio_url
-                metadata.audio_url = audioUrls[0];
-              }
-              
-              // Create application with the video reference and metadata
-              console.log(`Creating application with video reference and metadata:`, metadata);
-              await createApplication(id, videoUrl, metadata);
-              
-            } catch (uploadError: any) {
-              console.error("Cloud upload failed:", uploadError);
-              
-              // Continue with locally saved video
-              videoUrl = "video_saved_locally";
-              setServiceError(`Cloud upload failed: ${uploadError.message}. Video saved to your device instead.`);
+            console.log(`Uploading video to bucket '${bucketName}': ${filePath}`);
+            
+            // Upload to the bucket
+            const { data, error } = await supabase.storage
+              .from(bucketName)
+              .upload(filePath, videoBlob, {
+                cacheControl: '3600',
+                upsert: true,
+                contentType: 'video/webm'
+              });
+            
+            if (error) {
+              console.error("Video upload error:", error);
+              throw error;
             }
+            
+            // Successfully uploaded, get the URL
+            const { data: urlData } = supabase.storage
+              .from(bucketName)
+              .getPublicUrl(filePath);
+            
+            if (!urlData || !urlData.publicUrl) {
+              throw new Error("Failed to get URL for uploaded video");
+            }
+            
+            videoUrl = urlData.publicUrl;
+            console.log("Successfully uploaded video. URL:", videoUrl);
           }
         }
-      } catch (videoError: any) {
-        console.error("Video processing error:", videoError);
-        setServiceError(`Video processing error: ${videoError.message}. Your application will still be submitted.`);
-      }
-      
-      // If we get here with the old createApplication call, use it as a fallback
-      if (typeof createApplication === 'function' && 
-          createApplication.length <= 2) {
-        console.log(`Falling back to legacy createApplication with video reference: ${videoUrl}`);
-        await createApplication(id, videoUrl);
+        
+        // Now try to save all the metadata
+        const metadata: Record<string, any> = {
+          video_url: videoUrl
+        };
+        
+        // Add transcript if available
+        if (transcription) {
+          console.log("Adding transcript to metadata");
+          metadata.transcript = transcription;
+        }
+        
+        // Add ElevenLabs original audio URLs for reference (these might expire)
+        if (audioUrls.length > 0) {
+          console.log(`Adding ${audioUrls.length} original ElevenLabs audio URLs to metadata`);
+          metadata.elevenlabs_audio_urls = audioUrls;
+        }
+        
+        // Add our permanently stored audio URLs
+        if (audioFileUrls.length > 0) {
+          console.log(`Adding ${audioFileUrls.length} permanent audio URLs to metadata`);
+          metadata.audio_urls = audioFileUrls;
+          metadata.audio_url = audioFileUrls[0]; // Primary audio URL
+        }
+        
+        // Create application with the video reference, metadata, and conversation ID
+        console.log(`Creating application with video, audio, metadata and conversation_id: ${finalConversationId}`);
+        const applicationId = await createApplication(id, videoUrl, metadata, finalConversationId);
+        
+        // If we have a conversation ID and application ID, trigger the edge function to fetch the audio
+        if (finalConversationId && applicationId) {
+          console.log(`Triggering audio retrieval for application: ${applicationId}`);
+          try {
+            const result = await triggerStoreAudio(applicationId);
+            if (result.success) {
+              console.log('Audio retrieval triggered successfully:', result);
+            } else {
+              console.error('Failed to trigger audio retrieval:', result.message);
+            }
+          } catch (fetchError) {
+            console.error('Error triggering audio retrieval:', fetchError);
+            // Continue anyway, this is just a background task
+          }
+        }
+        
+      } catch (uploadError: any) {
+        console.error("Upload failed:", uploadError);
+        
+        // Create application without video, but with transcript
+        videoUrl = "upload_failed";
+        
+        const fallbackMetadata: Record<string, any> = {};
+        if (transcription) fallbackMetadata.transcript = transcription;
+        if (audioUrls.length > 0) {
+          fallbackMetadata.elevenlabs_audio_urls = audioUrls;
+        }
+        if (audioFileUrls.length > 0) {
+          fallbackMetadata.audio_urls = audioFileUrls;
+          fallbackMetadata.audio_url = audioFileUrls[0];
+        }
+        
+        // Still include the conversation ID even in fallback scenario
+        const fallbackAppId = await createApplication(id, videoUrl, 
+          Object.keys(fallbackMetadata).length > 0 ? fallbackMetadata : undefined,
+          finalConversationId);
+          
+        // Trigger audio storage for fallback path if we have a conversation ID
+        if (finalConversationId && fallbackAppId) {
+          console.log(`Triggering audio retrieval for fallback application: ${fallbackAppId}`);
+          try {
+            const result = await triggerStoreAudio(fallbackAppId);
+            if (result.success) {
+              console.log('Fallback audio retrieval triggered successfully:', result);
+            } else {
+              console.error('Failed to trigger fallback audio retrieval:', result.message);
+            }
+          } catch (fetchError) {
+            console.error('Error triggering fallback audio retrieval:', fetchError);
+            // Continue anyway, this is just a background task
+          }
+        }
+        
+        setServiceError(`Upload failed: ${uploadError.message}. Your application will be submitted with limited media.`);
       }
       
       setHasApplied(true);
@@ -1157,7 +1565,20 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
       setShowScreeningDialog(false);
       
       // Create application without video
-      await createApplication(id, "no_video");
+      const appId = await createApplication(id, "no_video");
+      
+      // Check if there's a conversation ID from previous chat
+      if (globalConversationId && appId) {
+        console.log(`Triggering audio retrieval for no_video application: ${appId}`);
+        try {
+          const result = await triggerStoreAudio(appId);
+          if (!result.success) {
+            console.error('Failed to trigger audio retrieval:', result.message);
+          }
+        } catch (error) {
+          console.error('Error triggering audio retrieval:', error);
+        }
+      }
       
       setHasApplied(true);
       window.location.href = '/applications';
@@ -1170,7 +1591,21 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
   const createDirectApplication = async () => {
     try {
       setApplying(true);
-      await createApplication(id, "no_video");
+      const appId = await createApplication(id, "no_video");
+      
+      // Check if there's a conversation ID from previous interaction
+      if (globalConversationId && appId) {
+        console.log(`Triggering audio retrieval for direct application: ${appId}`);
+        try {
+          const result = await triggerStoreAudio(appId);
+          if (!result.success) {
+            console.error('Failed to trigger audio retrieval:', result.message);
+          }
+        } catch (error) {
+          console.error('Error triggering audio retrieval:', error);
+        }
+      }
+      
       setHasApplied(true);
       window.location.href = '/applications';
     } catch (err) {
@@ -1186,26 +1621,9 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
       if (audioContextRef.current) {
         try {
           audioContextRef.current.close();
-        } catch (err) {
+            } catch (err) {
           console.error('Error closing audio context:', err);
         }
-      }
-    };
-  }, []);
-
-  // Add function to capture system audio output
-  useEffect(() => {
-    // Set up audio output element
-    const audioOutput = document.createElement('audio');
-    audioOutput.id = 'ai-output-audio';
-    audioOutput.autoplay = true;
-    document.body.appendChild(audioOutput);
-    audioOutputRef.current = audioOutput;
-    
-    // Make sure to clean up
-    return () => {
-      if (audioOutputRef.current) {
-        document.body.removeChild(audioOutputRef.current);
       }
     };
   }, []);
@@ -1571,8 +1989,8 @@ Begin the interview by introducing yourself as an AI recruiter for ${job.company
                   {isElevenLabsInitializing && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
                       <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
+                </div>
+              )}
                 </div>
               )}
               
