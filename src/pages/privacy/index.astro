@@ -1,0 +1,97 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const title = "Privacy Policy | Clutch Jobs";
+const description = "Learn how Clutch Jobs protects your privacy and handles your personal information.";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white">
+    {/* Hero Section */}
+    <section class="bg-[#166A9A] pt-32 pb-20">
+      <div class="max-w-7xl mx-auto px-4 text-center text-white">
+        <h1 class="text-5xl font-serif mb-4">Privacy Policy</h1>
+        <p class="text-xl">Last updated: April 15, 2025</p>
+      </div>
+    </section>
+
+    {/* Content Section */}
+    <section class="py-20">
+      <div class="max-w-4xl mx-auto px-4">
+        <div class="prose prose-lg max-w-none">
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">1. Information We Collect</h2>
+            
+            <h3 class="text-xl font-semibold text-gray-900 mb-3">1.1 Information You Provide</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+              <li>Account information (name, email, password)</li>
+              <li>Profile information (work history, education, skills)</li>
+              <li>Company information (for employers)</li>
+              <li>Job posting details</li>
+              <li>Communication preferences</li>
+            </ul>
+
+            <h3 class="text-xl font-semibold text-gray-900 mb-3">1.2 Automatically Collected Information</h3>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2">
+              <li>Device information</li>
+              <li>Usage data</li>
+              <li>Location information</li>
+              <li>Cookies and similar technologies</li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">2. How We Use Your Information</h2>
+            <p class="text-gray-700 leading-relaxed mb-4">We use your information to:</p>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2">
+              <li>Provide and improve our services</li>
+              <li>Match candidates with job opportunities</li>
+              <li>Process AI-powered evaluations</li>
+              <li>Communicate with you</li>
+              <li>Ensure platform security</li>
+              <li>Comply with legal obligations</li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">3. Your Rights</h2>
+            <p class="text-gray-700 leading-relaxed mb-4">You have the right to:</p>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2">
+              <li>Access your personal information</li>
+              <li>Correct inaccurate data</li>
+              <li>Request deletion of your data</li>
+              <li>Object to processing</li>
+              <li>Data portability</li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">4. Data Security</h2>
+            <p class="text-gray-700 leading-relaxed">
+              We implement appropriate technical and organizational measures to protect your 
+              information. However, no method of transmission over the internet is 100% secure.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">5. Contact Us</h2>
+            <p class="text-gray-700 leading-relaxed">
+              For questions about this Privacy Policy, please contact us at:
+            </p>
+            <div class="mt-4 text-gray-700">
+              <p class="font-medium">Email:</p>
+              <p class="mb-2">privacy@clutchjobs.com</p>
+              <p class="font-medium">Address:</p>
+              <p>123 Business Avenue, Suite 100<br />Toronto, ON M5V 2T6</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

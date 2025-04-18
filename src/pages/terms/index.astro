@@ -1,0 +1,98 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const title = "Terms of Use | Clutch Jobs";
+const description = "Read our terms of use to understand your rights and responsibilities when using Clutch Jobs' services.";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white">
+    {/* Hero Section */}
+    <section class="bg-[#166A9A] pt-32 pb-20">
+      <div class="max-w-7xl mx-auto px-4 text-center text-white">
+        <h1 class="text-5xl font-serif mb-4">Terms of Use</h1>
+        <p class="text-xl">Last updated: April 15, 2025</p>
+      </div>
+    </section>
+
+    {/* Content Section */}
+    <section class="py-20">
+      <div class="max-w-4xl mx-auto px-4">
+        <div class="prose prose-lg max-w-none">
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">1. Introduction</h2>
+            <p class="text-gray-700 leading-relaxed">
+              At Clutch Jobs, we take your privacy seriously. This Privacy Policy explains how we 
+              collect, use, disclose, and safeguard your information when you use our platform.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">2. Use of Services</h2>
+            <p class="text-gray-700 leading-relaxed mb-6">
+              Our services are designed to help employers find qualified candidates and job seekers 
+              find suitable employment opportunities. You agree to use these services only for their 
+              intended purpose.
+            </p>
+
+            <h3 class="text-xl font-semibold text-gray-900 mb-3">2.1 Employer Responsibilities</h3>
+            <ul class="list-disc pl-6 mb-6 text-gray-700 space-y-2">
+              <li>Provide accurate job posting information</li>
+              <li>Maintain confidentiality of candidate information</li>
+              <li>Use AI evaluation credits responsibly</li>
+              <li>Comply with all applicable employment laws</li>
+            </ul>
+
+            <h3 class="text-xl font-semibold text-gray-900 mb-3">2.2 Job Seeker Responsibilities</h3>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2">
+              <li>Provide accurate personal and professional information</li>
+              <li>Maintain profile accuracy and updates</li>
+              <li>Respect intellectual property rights</li>
+              <li>Use the platform professionally</li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">3. AI Technology Use</h2>
+            <p class="text-gray-700 leading-relaxed">
+              Our platform uses artificial intelligence for candidate evaluation and matching. While 
+              we strive for accuracy, you acknowledge that AI recommendations are assistive tools 
+              and not definitive decisions.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">4. Credit System</h2>
+            <p class="text-gray-700 leading-relaxed mb-4">
+              Employers purchase credits for AI-powered candidate evaluations. Credits:
+            </p>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2">
+              <li>Are non-refundable once used</li>
+              <li>Have specific validity periods based on package</li>
+              <li>Cannot be transferred between accounts</li>
+              <li>May expire as specified in purchase terms</li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">5. Contact Information</h2>
+            <p class="text-gray-700 leading-relaxed">
+              For questions about these Terms, please contact us at:
+            </p>
+            <div class="mt-4 text-gray-700">
+              <p class="font-medium">Email:</p>
+              <p class="mb-2">legal@clutchjobs.com</p>
+              <p class="font-medium">Address:</p>
+              <p>123 Business Avenue, Suite 100<br />Toronto, ON M5V 2T6</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

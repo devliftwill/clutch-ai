@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Companies } from '../../components/Companies';
+
+const title = "Companies Hiring Now | Clutch Jobs";
+const description = "Discover great companies that are currently hiring. Browse open positions and find your next career opportunity.";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <Companies client:load />
+</Layout>

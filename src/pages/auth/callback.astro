@@ -1,0 +1,57 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/auth';
+
+const title = "Authentication Callback | Clutch Jobs";
+const description = "Processing your authentication...";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white pt-32">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center">
+        <div class="w-16 h-16 border-4 border-[#87B440] border-t-transparent rounded-full animate-spin mx-auto mb-8"></div>
+        <h1 class="text-2xl font-bold mb-4">Processing Authentication</h1>
+        <p class="text-gray-600">Please wait while we complete your authentication...</p>
+      </div>
+    </div>
+
+    <script>
+      import { supabase } from '../../lib/auth';
+
+      // Handle the OAuth callback
+      const handleCallback = async () => {
+        try {
+          // Get the current URL
+          const url = new URL(window.location.href);
+
+          // Exchange code for session
+          const { data, error } = await supabase.auth.exchangeCodeForSession(url.hash);
+
+          if (error) throw error;
+
+          if (data.session) {
+            // Set the session
+            await supabase.auth.setSession(data.session);
+            
+            // Redirect to home page
+            window.location.href = '/';
+          } else {
+            throw new Error('No session received');
+          }
+        } catch (error) {
+          console.error('Authentication error:', error);
+          window.location.href = '/login?error=auth_callback_failed';
+        }
+      };
+
+      // Run the callback handler
+      handleCallback();
+    </script>
+  </main>
+</Layout>

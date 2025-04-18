@@ -1,0 +1,57 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { BlogPost } from '../../components/BlogPost';
+import { getBlogs } from '../../lib/blogs';
+
+export async function getStaticPaths() {
+  try {
+    const blogs = await getBlogs();
+    return blogs.map((blog) => ({
+      params: { slug: blog.slug },
+      props: { blog },
+    }));
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    return [];
+  }
+}
+
+const { blog } = Astro.props;
+const { slug } = Astro.params;
+
+const title = blog ? 
+  `${blog.title} | Clutch Jobs Blog` : 
+  'Blog Post | Clutch Jobs';
+
+const description = blog ?
+  blog.excerpt :
+  'Read our latest blog posts about recruitment, career development, and industry insights.';
+
+const canonicalURL = Astro.url.pathname;
+
+// Schema for blog post
+const blogSchema = blog ? {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": blog.title,
+  "description": blog.excerpt,
+  "image": blog.image_url,
+  "datePublished": blog.created_at,
+  "dateModified": blog.updated_at,
+  "author": {
+    "@type": "Person",
+    "name": blog.author
+  }
+} : null;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+  type="article"
+  schema={blogSchema}
+>
+  <BlogPost slug={slug} client:load />
+</Layout>
+---

@@ -1,0 +1,16 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { Applications } from '../../../components/jobs/Applications';
+
+const title = "Job Applications | Clutch Jobs";
+const description = "Manage applications for your job postings.";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <Applications client:load />
+</Layout>

@@ -1,0 +1,25 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { BlogPost } from '../../components/BlogPost';
+
+export async function getStaticPaths() {
+  const posts = [
+    { id: "print-publishing" },
+    { id: "medieval-origins" },
+    { id: "quis-nostrud" },
+    { id: "designers-checklist" },
+    { id: "quick-challenge" },
+    { id: "boost-business" }
+  ];
+
+  return posts.map(({ id }) => ({
+    params: { id },
+  }));
+}
+
+const { id } = Astro.params;
+---
+
+<Layout title="Blog Post - Clutch Jobs">
+  <BlogPost id={id} client:load />
+</Layout>

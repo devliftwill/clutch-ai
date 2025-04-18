@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { JobDetails } from '../../components/JobDetails';
+import { getJob } from '../../lib/jobs';
+
+// Mark this route as server-side rendered
+export const prerender = false;
+
+const { id } = Astro.params;
+
+// Get job data server-side
+let job = null;
+try {
+  job = await getJob(id);
+} catch (error) {
+  console.error('Error fetching job:', error);
+}
+
+const title = job ? 
+  `${job.title} at ${job.company?.company_name} | Clutch Jobs` : 
+  'Job Details | Clutch Jobs';
+
+const description = job ?
+  `${job.title} position at ${job.company?.company_name}. ${job.type} role in ${job.location}. ${job.overview.slice(0, 150)}...` :
+  'View detailed job posting information on Clutch Jobs';
+
+const canonicalURL = Astro.url.pathname;
+
+// Schema for job posting
+const jobSchema = job ? {
+  "@context": "https://schema.org",
+  "@type": "JobPosting",
+  "title": job.title,
+  "description": job.overview,
+  "datePosted": job.created_at,
+  "validThrough": new Date(new Date(job.created_at).setMonth(new Date(job.created_at).getMonth() + 1)).toISOString(),
+  "employmentType": job.type,
+  "experienceRequirements": job.experience_level,
+  "jobBenefits": job.benefits.join(", "),
+  "workHours": job.work_schedule,
+  "hiringOrganization": {
+    "@type": "Organization",
+    "name": job.company?.company_name,
+    "sameAs": job.company?.website,
+    "logo": job.company?.avatar_url
+  },
+  "jobLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": job.location
+    }
+  }
+} : null;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+  type="article"
+  schema={jobSchema}
+>
+  <JobDetails id={id} client:load />
+</Layout>

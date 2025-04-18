@@ -1,0 +1,116 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const title = "About Us - Our Mission & Vision | Clutch Jobs";
+const description = "Learn about Clutch Jobs' mission to revolutionize hiring through AI-powered recruitment solutions. Discover how we're connecting top talent with visionary employers.";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white">
+    {/* Hero Section */}
+    <section class="bg-[#166A9A] pt-32 pb-20">
+      <div class="max-w-7xl mx-auto px-4 text-center text-white">
+        <h1 class="text-5xl font-serif mb-4">About Clutch Jobs</h1>
+        <p class="text-xl">Revolutionizing recruitment through AI innovation</p>
+      </div>
+    </section>
+
+    {/* Mission Section */}
+    <section class="py-20">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 class="text-3xl font-bold mb-6">Our Mission</h2>
+            <p class="text-lg text-gray-600 mb-8">
+              At Clutch Jobs, we're on a mission to transform the hiring landscape by leveraging 
+              cutting-edge AI technology to create meaningful connections between talented 
+              individuals and forward-thinking organizations.
+            </p>
+            <p class="text-lg text-gray-600">
+              We believe that the right match between candidate and employer can spark innovation, 
+              drive growth, and create lasting impact. That's why we've built a platform that goes 
+              beyond traditional job boards, using advanced AI to understand the nuances of both 
+              talent and opportunity.
+            </p>
+          </div>
+          <div class="relative">
+            <img 
+              src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+              alt="Team collaboration" 
+              class="rounded-lg shadow-lg"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Values Section */}
+    <section class="py-20 bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-16">Our Core Values</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              title: "Innovation",
+              description: "We continuously push the boundaries of what's possible in recruitment technology."
+            },
+            {
+              title: "Integrity",
+              description: "We maintain the highest standards of honesty and ethical behavior in all our operations."
+            },
+            {
+              title: "Impact",
+              description: "We measure our success by the positive change we create in people's careers and businesses."
+            }
+          ].map((value) => (
+            <div class="bg-white p-8 rounded-lg shadow-sm">
+              <h3 class="text-xl font-bold mb-4">{value.title}</h3>
+              <p class="text-gray-600">{value.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Team Section */}
+    <section class="py-20">
+      <div class="max-w-7xl mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-16">Our Leadership Team</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              name: "Sarah Johnson",
+              role: "Chief Executive Officer",
+              image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
+            },
+            {
+              name: "Michael Chen",
+              role: "Chief Technology Officer",
+              image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
+            },
+            {
+              name: "Emily Rodriguez",
+              role: "Chief Product Officer",
+              image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
+            }
+          ].map((member) => (
+            <div class="text-center">
+              <img 
+                src={member.image} 
+                alt={member.name} 
+                class="w-48 h-48 rounded-full mx-auto mb-4 object-cover"
+              />
+              <h3 class="text-xl font-bold mb-1">{member.name}</h3>
+              <p class="text-gray-600">{member.role}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

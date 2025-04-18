@@ -1,0 +1,57 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+
+const title = "Authentication Callback | Clutch Jobs";
+const description = "Processing your authentication...";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white pt-32">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center">
+        <div class="w-16 h-16 border-4 border-[#87B440] border-t-transparent rounded-full animate-spin mx-auto mb-8"></div>
+        <h1 class="text-2xl font-bold mb-4">Processing Authentication</h1>
+        <p class="text-gray-600">Please wait while we complete your authentication...</p>
+      </div>
+    </div>
+
+    <script>
+      import { supabase } from '../../../lib/auth';
+
+      async function handleCallback() {
+        try {
+          // Get the hash fragment from the URL
+          const hashFragment = window.location.hash;
+          
+          if (!hashFragment) {
+            throw new Error('No authentication data found');
+          }
+
+          // Parse the hash fragment
+          const { data, error } = await supabase.auth.getSessionFromUrl();
+          
+          if (error) throw error;
+          if (!data.session) throw new Error('No session data found');
+
+          // Set the session
+          await supabase.auth.setSession(data.session);
+
+          // Always redirect to home page, even on error
+          window.location.href = '/';
+        } catch (err) {
+          console.error('Auth error:', err);
+          // Redirect to home page instead of /login
+          window.location.href = '/';
+        }
+      }
+
+      // Run the callback handler
+      handleCallback();
+    </script>
+  </main>
+</Layout>

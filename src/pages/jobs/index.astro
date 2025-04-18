@@ -1,0 +1,33 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Jobs } from '../../components/Jobs';
+
+const title = "Job Listings - Find Your Next Career | Clutch Jobs";
+const description = "Browse through our curated list of job opportunities across various industries. Find your perfect role with leading employers on Clutch Jobs.";
+const canonicalURL = Astro.url.pathname;
+
+// Schema for job search page
+const jobSearchSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "url": "https://clutchjobs.ca",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://clutchjobs.ca/jobs?search={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+};
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+  type="website"
+  schema={jobSearchSchema}
+>
+  <Jobs client:load />
+</Layout>

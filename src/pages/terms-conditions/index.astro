@@ -1,0 +1,111 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const title = "Terms & Conditions | Clutch Jobs";
+const description = "Read our terms and conditions to understand your rights and responsibilities when using Clutch Jobs' services.";
+const canonicalURL = Astro.url.pathname;
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white">
+    {/* Hero Section */}
+    <section class="bg-[#166A9A] pt-32 pb-20">
+      <div class="max-w-7xl mx-auto px-4 text-center text-white">
+        <h1 class="text-5xl font-serif mb-4">Terms & Conditions</h1>
+        <p class="text-xl">Last updated: April 15, 2025</p>
+      </div>
+    </section>
+
+    {/* Content Section */}
+    <section class="py-20">
+      <div class="max-w-4xl mx-auto px-4">
+        <div class="prose max-w-none">
+          <h2>1. Acceptance of Terms</h2>
+          <p>
+            By accessing and using Clutch Jobs ("the Platform"), you agree to be bound by these 
+            Terms and Conditions. If you do not agree to these terms, please do not use the Platform.
+          </p>
+
+          <h2>2. Use of Services</h2>
+          <p>
+            Our services are designed to help employers find qualified candidates and job seekers 
+            find suitable employment opportunities. You agree to use these services only for their 
+            intended purpose.
+          </p>
+
+          <h3>2.1 Employer Responsibilities</h3>
+          <ul>
+            <li>Provide accurate job posting information</li>
+            <li>Maintain confidentiality of candidate information</li>
+            <li>Use AI evaluation credits responsibly</li>
+            <li>Comply with all applicable employment laws</li>
+          </ul>
+
+          <h3>2.2 Job Seeker Responsibilities</h3>
+          <ul>
+            <li>Provide accurate personal and professional information</li>
+            <li>Maintain profile accuracy and updates</li>
+            <li>Respect intellectual property rights</li>
+            <li>Use the platform professionally</li>
+          </ul>
+
+          <h2>3. AI Technology Use</h2>
+          <p>
+            Our platform uses artificial intelligence for candidate evaluation and matching. While 
+            we strive for accuracy, you acknowledge that AI recommendations are assistive tools 
+            and not definitive decisions.
+          </p>
+
+          <h2>4. Privacy and Data Protection</h2>
+          <p>
+            We take your privacy seriously. Our collection and use of personal data is governed 
+            by our Privacy Policy, which is incorporated into these Terms by reference.
+          </p>
+
+          <h2>5. Credit System</h2>
+          <p>
+            Employers purchase credits for AI-powered candidate evaluations. Credits:
+          </p>
+          <ul>
+            <li>Are non-refundable once used</li>
+            <li>Have specific validity periods based on package</li>
+            <li>Cannot be transferred between accounts</li>
+            <li>May expire as specified in purchase terms</li>
+          </ul>
+
+          <h2>6. Intellectual Property</h2>
+          <p>
+            All content and technology on the Platform, including but not limited to text, 
+            graphics, logos, and software, is our property or that of our licensors and is 
+            protected by intellectual property laws.
+          </p>
+
+          <h2>7. Limitation of Liability</h2>
+          <p>
+            We provide the Platform "as is" and make no warranties, express or implied. We shall 
+            not be liable for any indirect, incidental, special, or consequential damages.
+          </p>
+
+          <h2>8. Modifications</h2>
+          <p>
+            We reserve the right to modify these Terms at any time. Continued use of the Platform 
+            after changes constitutes acceptance of the modified Terms.
+          </p>
+
+          <h2>9. Contact Information</h2>
+          <p>
+            For questions about these Terms, please contact us at:
+            <br />
+            Email: legal@clutchjobs.com
+            <br />
+            Address: 123 Business Avenue, Suite 100, Toronto, ON M5V 2T6
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

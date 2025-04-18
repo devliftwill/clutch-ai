@@ -1,0 +1,173 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Button } from '../../components/ui/button';
+import { Check } from 'lucide-react';
+
+const title = "Pricing - AI-Powered Recruitment Credits | Clutch Jobs";
+const description = "Choose the perfect credit package for your hiring needs. Our AI-powered candidate sourcing and evaluation system helps you find the best talent efficiently.";
+const canonicalURL = Astro.url.pathname;
+
+const plans = [
+  {
+    name: "Starter",
+    price: 299,
+    credits: 50,
+    features: [
+      "50 AI candidate evaluations",
+      "Basic candidate matching",
+      "Standard job posting visibility",
+      "Email support",
+      "30-day credit validity"
+    ]
+  },
+  {
+    name: "Professional",
+    price: 499,
+    credits: 100,
+    popular: true,
+    features: [
+      "100 AI candidate evaluations",
+      "Advanced candidate matching",
+      "Premium job posting visibility",
+      "Priority email support",
+      "60-day credit validity",
+      "Custom screening questions",
+      "Candidate engagement analytics"
+    ]
+  },
+  {
+    name: "Enterprise",
+    price: 999,
+    credits: 250,
+    features: [
+      "250 AI candidate evaluations",
+      "Advanced candidate matching",
+      "Featured job posting visibility",
+      "Priority phone & email support",
+      "90-day credit validity",
+      "Custom screening questions",
+      "Advanced analytics dashboard",
+      "Dedicated account manager",
+      "Custom integration options"
+    ]
+  }
+];
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white">
+    {/* Hero Section */}
+    <section class="bg-[#166A9A] pt-32 pb-20">
+      <div class="max-w-7xl mx-auto px-4 text-center text-white">
+        <h1 class="text-5xl font-serif mb-4">Simple, Transparent Pricing</h1>
+        <p class="text-xl max-w-2xl mx-auto">
+          Power your hiring with AI-driven candidate sourcing and evaluation. 
+          Only pay for the candidates you want to evaluate.
+        </p>
+      </div>
+    </section>
+
+    {/* Pricing Section */}
+    <section class="py-20">
+      <div class="max-w-7xl mx-auto px-4">
+        {/* How Credits Work */}
+        <div class="text-center mb-16">
+          <h2 class="text-3xl font-bold mb-6">How Credits Work</h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Credits are used when our AI evaluates candidates for your job postings. 
+            One credit equals one candidate evaluation, helping you identify the best matches 
+            before reviewing applications.
+          </p>
+        </div>
+
+        {/* Pricing Cards */}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {plans.map((plan) => (
+            <div class={`relative bg-white rounded-lg border ${plan.popular ? 'border-[#87B440]' : 'border-gray-200'} p-8 shadow-sm flex flex-col h-full`}>
+              {plan.popular && (
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                  <span class="bg-[#87B440] text-white text-sm font-medium px-4 py-1 rounded-full">
+                    Most Popular
+                  </span>
+                </div>
+              )}
+              
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold mb-2">{plan.name}</h3>
+                <div class="flex items-center justify-center mb-2">
+                  <span class="text-4xl font-bold">${plan.price}</span>
+                  <span class="text-gray-600 ml-2">/ package</span>
+                </div>
+                <p class="text-[#87B440] font-medium">{plan.credits} Credits</p>
+              </div>
+
+              <ul class="space-y-4 mb-8 flex-grow">
+                {plan.features.map((feature) => (
+                  <li class="flex items-start gap-2">
+                    <Check class="w-5 h-5 text-[#87B440] mt-0.5" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button 
+                class={`w-full mt-auto ${plan.popular ? 'bg-[#87B440] hover:bg-[#759C37]' : 'bg-gray-900 hover:bg-gray-800'}`}
+              >
+                Get Started
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* Enterprise Custom */}
+        <div class="mt-16 text-center">
+          <h3 class="text-2xl font-bold mb-4">Need a Custom Solution?</h3>
+          <p class="text-gray-600 mb-8">
+            For larger organizations or specific requirements, we offer custom packages 
+            tailored to your needs.
+          </p>
+          <a href="/contact">
+            <Button variant="outline" size="lg">
+              Contact Sales
+            </Button>
+          </a>
+        </div>
+
+        {/* FAQ */}
+        <div class="mt-20">
+          <h2 class="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {[
+              {
+                q: "How do credits work?",
+                a: "Credits are consumed when our AI system evaluates a candidate for your job posting. One credit equals one candidate evaluation, helping you identify the best matches before reviewing applications."
+              },
+              {
+                q: "How long do credits last?",
+                a: "Credits validity varies by plan - 30 days for Starter, 60 days for Professional, and 90 days for Enterprise plans. Unused credits expire after this period."
+              },
+              {
+                q: "Can I buy more credits?",
+                a: "Yes! You can purchase additional credit packages at any time. The more credits you buy, the better the value."
+              },
+              {
+                q: "What happens if I run out of credits?",
+                a: "You can still post jobs and receive applications, but you'll need to purchase more credits to use the AI evaluation features."
+              }
+            ].map((faq) => (
+              <div>
+                <h3 class="font-semibold text-lg mb-2">{faq.q}</h3>
+                <p class="text-gray-600">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>
+---

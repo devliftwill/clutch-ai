@@ -1,0 +1,129 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const title = "Frequently Asked Questions | Clutch Jobs";
+const description = "Find answers to common questions about using Clutch Jobs, our AI-powered recruitment platform, credit system, and more.";
+const canonicalURL = Astro.url.pathname;
+
+const faqs = [
+  {
+    category: "General",
+    questions: [
+      {
+        q: "What is Clutch Jobs?",
+        a: "Clutch Jobs is an AI-powered recruitment platform that connects employers with qualified candidates. We use advanced artificial intelligence to evaluate and match candidates with job opportunities."
+      },
+      {
+        q: "How is Clutch Jobs different from other job boards?",
+        a: "Unlike traditional job boards, we use AI technology to pre-screen and evaluate candidates, saving employers time and helping candidates find the most relevant opportunities."
+      },
+      {
+        q: "Is Clutch Jobs available internationally?",
+        a: "Currently, we focus on serving the Canadian market, but we have plans to expand to other regions in the future."
+      }
+    ]
+  },
+  {
+    category: "For Employers",
+    questions: [
+      {
+        q: "How do credits work?",
+        a: "Credits are used when our AI evaluates candidates for your job postings. One credit equals one candidate evaluation, helping you identify the best matches before reviewing applications."
+      },
+      {
+        q: "What happens when I run out of credits?",
+        a: "You can still post jobs and receive applications, but you'll need to purchase more credits to use the AI evaluation features."
+      },
+      {
+        q: "How accurate is the AI evaluation?",
+        a: "Our AI system has been trained on millions of data points and achieves high accuracy in predicting candidate success. However, it should be used as a tool to assist your decision-making, not replace it."
+      }
+    ]
+  },
+  {
+    category: "For Job Seekers",
+    questions: [
+      {
+        q: "Is it free to apply for jobs?",
+        a: "Yes, it's completely free for job seekers to create profiles and apply for jobs on Clutch Jobs."
+      },
+      {
+        q: "How does the AI evaluate my application?",
+        a: "Our AI analyzes your skills, experience, and qualifications against the job requirements to determine the best matches. It considers both hard and soft skills."
+      },
+      {
+        q: "Can I see my evaluation results?",
+        a: "While specific evaluation scores are only visible to employers, you'll receive feedback on your match percentage for jobs you apply to."
+      }
+    ]
+  },
+  {
+    category: "Technical",
+    questions: [
+      {
+        q: "What browsers are supported?",
+        a: "Clutch Jobs works best on modern browsers like Chrome, Firefox, Safari, and Edge."
+      },
+      {
+        q: "Is my data secure?",
+        a: "Yes, we use industry-standard encryption and security measures to protect your data. Read our Privacy Policy for more details."
+      },
+      {
+        q: "Can I integrate Clutch Jobs with my ATS?",
+        a: "Yes, we offer API integration options for enterprise customers. Contact our sales team for more information."
+      }
+    ]
+  }
+];
+---
+
+<Layout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+>
+  <main class="min-h-screen bg-white">
+    {/* Hero Section */}
+    <section class="bg-[#166A9A] pt-32 pb-20">
+      <div class="max-w-7xl mx-auto px-4 text-center text-white">
+        <h1 class="text-5xl font-serif mb-4">Frequently Asked Questions</h1>
+        <p class="text-xl">Find answers to common questions about Clutch Jobs</p>
+      </div>
+    </section>
+
+    {/* FAQ Section */}
+    <section class="py-20">
+      <div class="max-w-4xl mx-auto px-4">
+        {faqs.map((category) => (
+          <div class="mb-16">
+            <h2 class="text-2xl font-bold mb-8">{category.category}</h2>
+            <div class="space-y-8">
+              {category.questions.map((faq) => (
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                  <h3 class="text-lg font-semibold mb-4">{faq.q}</h3>
+                  <p class="text-gray-600">{faq.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Contact Section */}
+        <div class="mt-16 text-center">
+          <h2 class="text-2xl font-bold mb-4">Still Have Questions?</h2>
+          <p class="text-gray-600 mb-8">
+            Can't find what you're looking for? We're here to help.
+          </p>
+          <div class="flex justify-center gap-4">
+            <a 
+              href="/contact" 
+              class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#87B440] hover:bg-[#759C37]"
+            >
+              Contact Support
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>
